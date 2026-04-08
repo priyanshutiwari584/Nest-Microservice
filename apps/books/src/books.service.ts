@@ -1,26 +1,35 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBookDto } from './dto/book.dto';
-import { NotFoundRpcException } from 'libs/common/exceptions';
+import {
+  ConflictRpcException,
+  NotFoundRpcException,
+} from 'libs/common/exceptions';
+import { CreatedResponse, OkResponse } from 'libs/common/response';
 
 @Injectable()
 export class BooksService {
   private books: Array<CreateBookDto> = [];
-  getHello(): string {
-    return 'Hello from Books service';
+  getHello() {
+    return OkResponse('Hello from Books service');
   }
 
-  findAll(): Array<CreateBookDto> {
-    return this.books;
+  findAll() {
+    return OkResponse(this.books, 'Books fetched successfully');
   }
 
   addBook(book: CreateBookDto) {
     if (book.name.includes('hello')) {
-      throw new NotFoundRpcException('Title is not allowed');
+      throw new ConflictRpcException('Title is not allowed');
     }
-    return this.books.push(book);
+    this.books.push(book);
+    return CreatedResponse(book, 'Book added successfully');
   }
 
   getbookById(id: number) {
-    return this.books[id];
+    const book = this.books[id];
+    if (!book) {
+      throw new NotFoundRpcException('Book not found');
+    }
+    return OkResponse(book, 'Book fetched successfully');
   }
 }
