@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICE_MAPPING } from './services/services.module';
+import { SERVICE_MAPPING } from './gateway-services/gateway-services.module';
 import { firstValueFrom } from 'rxjs';
 import { RpcContext, RpcResponse } from 'libs/common/interfaces';
 

@@ -6,6 +6,7 @@ import { GlobalExceptionFilter } from 'libs/common/filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
+  const PORT = process.env.PORT ?? 3000;
 
   const pipe = new ValidationPipe({
     whitelist: true,
@@ -23,6 +24,8 @@ async function bootstrap() {
   app.useGlobalPipes(pipe);
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  await app.listen(process.env.port ?? 3000);
+  await app.listen(PORT, () => {
+    console.log(`Application is running on: ${PORT}`);
+  });
 }
 bootstrap();

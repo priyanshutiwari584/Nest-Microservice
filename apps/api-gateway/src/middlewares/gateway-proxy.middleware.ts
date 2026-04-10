@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { ApiGatewayService } from '../api-gateway.service';
-import { SERVICE_MAPPING } from '../services/services.module';
+import { SERVICE_MAPPING } from '../gateway-services/gateway-services.module';
 import { randomUUID } from 'crypto';
 import { RpcContext } from 'libs/common/interfaces';
 
@@ -13,6 +13,10 @@ export class GatewayProxyMiddleware implements NestMiddleware {
     const url = req.originalUrl || req.url;
     const [pathname] = url.split('?');
     const urlParts = pathname.split('/').filter(Boolean);
+
+    if (url.startsWith('/auth')) {
+      return next();
+    }
 
     const servicePrefix = urlParts[0];
 
