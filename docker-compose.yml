@@ -74,6 +74,7 @@ services:
     networks:
       - app-network
 
+  # pgadmin
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
