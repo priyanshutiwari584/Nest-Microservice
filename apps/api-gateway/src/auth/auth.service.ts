@@ -2,7 +2,6 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'libs/redis';
@@ -11,8 +10,6 @@ import { KeycloakClient } from './keycloak';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   private readonly clientId: string;
   private readonly redirectUri: string;
   private readonly scope: string;
@@ -34,6 +31,7 @@ export class AuthService {
     this.grantType = this.config.get<string>('KEYCLOAK_GRANT_TYPE') as string;
   }
 
+  // Build authorization URL for Keycloak
   async buildAuthorizationUrl(): Promise<string> {
     const verifier = this.pkce.generateCodeVerifier();
     const challenge = this.pkce.generateCodeChallenge(verifier);
@@ -49,11 +47,13 @@ export class AuthService {
       state,
       code_challenge: challenge,
       code_challenge_method: 'S256',
+      prompt: 'login',
     });
 
     return `${this.authUri}?${params.toString()}`;
   }
 
+  // Exchange code for tokens
   async exchangeCode(code: string, state: string) {
     const verifier = await this.redis.get(state);
 
@@ -74,6 +74,7 @@ export class AuthService {
     });
   }
 
+  // Refresh tokens
   async refreshTokens(refreshToken: string) {
     if (!refreshToken) {
       throw new BadRequestException('Refresh token required');
@@ -86,6 +87,7 @@ export class AuthService {
     });
   }
 
+  // Logout from Keycloak
   async logout(refreshToken: string) {
     if (!refreshToken) return;
 

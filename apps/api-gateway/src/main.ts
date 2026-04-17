@@ -27,5 +27,15 @@ async function bootstrap() {
   await app.listen(PORT, () => {
     console.log(`Application is running on: ${PORT}`);
   });
+
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, closing server...');
+    app.close();
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, closing server...');
+    app.close();
+  });
 }
 bootstrap();

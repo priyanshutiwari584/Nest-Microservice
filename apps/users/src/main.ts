@@ -11,5 +11,15 @@ async function bootstrap() {
     },
   );
   await app.listen();
+
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, closing server...');
+    app.close();
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, closing server...');
+    app.close();
+  });
 }
 bootstrap();
