@@ -38,11 +38,7 @@ export class GatewayProxyMiddleware implements NestMiddleware {
     const pattern = `${context.method}.${urlParts[1]}`;
 
     try {
-      const result = await this.apiGatewayService.routeRequest(
-        servicePrefix,
-        pattern,
-        context,
-      );
+      const result = await this.apiGatewayService.routeRequest(servicePrefix, pattern, context);
 
       return res.status(result.status ?? 200).json({
         success: true,

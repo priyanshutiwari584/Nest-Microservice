@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { ClientProxy } from '@nestjs/microservices';
 import { SERVICE_MAPPING } from './gateway-services/gateway-services.module';
@@ -13,11 +9,7 @@ import { RpcContext, RpcResponse } from 'libs/common/interfaces';
 export class ApiGatewayService {
   constructor(private moduleRef: ModuleRef) {}
 
-  async routeRequest(
-    servicePrefix: string,
-    pattern: string,
-    context: RpcContext,
-  ): Promise<RpcResponse> {
+  async routeRequest(servicePrefix: string, pattern: string, context: RpcContext): Promise<RpcResponse> {
     const serviceName = SERVICE_MAPPING[servicePrefix];
     if (!serviceName) {
       throw new NotFoundException(`No service for prefix "${servicePrefix}"`);
@@ -27,9 +19,7 @@ export class ApiGatewayService {
       strict: false,
     });
     if (!client) {
-      throw new InternalServerErrorException(
-        `Client "${serviceName}" not resolved`,
-      );
+      throw new InternalServerErrorException(`Client "${serviceName}" not resolved`);
     }
 
     const messagePattern = { cmd: `${servicePrefix}.${pattern}` };

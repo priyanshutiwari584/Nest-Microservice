@@ -6,17 +6,18 @@ import { GlobalExceptionFilter } from 'libs/common/filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
-  const PORT = process.env.PORT ?? 3000;
+  const PORT = process.env.API_GATEWAY_PORT ?? 5000;
 
   const pipe = new ValidationPipe({
     whitelist: true,
+    forbidNonWhitelisted: true,
     transform: true,
     exceptionFactory: (errors: ValidationError[]) => {
       return new BadRequestException(
         errors
-          .map(err => Object.values(err.constraints || {}))
+          .map((err) => Object.values(err.constraints || {}))
           .flat()
-          .join(', '),
+          .join(','),
       );
     },
   });

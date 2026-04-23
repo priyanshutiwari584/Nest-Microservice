@@ -7,21 +7,17 @@ import { GlobalRpcExceptionFilter } from 'libs/common/filters';
 import { BadRequestRpcException } from 'libs/common/exceptions';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    BooksModule,
-    {
-      transport: Transport.TCP,
-      options: { host: 'localhost', port: 3002 },
-    },
-  );
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(BooksModule, {
+    transport: Transport.TCP,
+    options: { host: 'localhost', port: Number(process.env.BOOKS_PORT) || 5002 },
+  });
 
   const pipe = new ValidationPipe({
     whitelist: true,
+    forbidNonWhitelisted: true,
     transform: true,
     exceptionFactory: (errors: ValidationError[]) => {
-      const errorMessages = errors
-        .map(err => Object.values(err.constraints || {}))
-        .flat();
+      const errorMessages = errors.map((err) => Object.values(err.constraints || {})).flat();
 
       return new BadRequestRpcException(errorMessages.join(', '));
     },

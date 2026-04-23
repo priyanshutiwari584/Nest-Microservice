@@ -1,10 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { RpcErrorResponse } from '../interfaces';
 
@@ -21,8 +15,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
     const url = req.originalUrl || req.url;
-    const requestId =
-      (req.headers['x-request-id'] as string) ?? crypto.randomUUID();
+    const requestId = (req.headers['x-request-id'] as string) ?? crypto.randomUUID();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
@@ -60,10 +53,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     // 3. "No handler" string thrown by NestJS TCP transport
-    else if (
-      typeof exception === 'string' &&
-      exception.includes('There is no matching message handler')
-    ) {
+    else if (typeof exception === 'string' && exception.includes('There is no matching message handler')) {
       status = HttpStatus.NOT_FOUND;
       message = `Cannot ${req.method} ${url}`;
     }

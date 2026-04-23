@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'libs/redis';
 import { PkceService } from './pkce';
@@ -14,7 +10,6 @@ export class AuthService {
   private readonly redirectUri: string;
   private readonly scope: string;
   private readonly authUri: string;
-  private readonly grantType: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -23,12 +18,9 @@ export class AuthService {
     private readonly redis: RedisService,
   ) {
     this.clientId = this.config.get<string>('KEYCLOAK_CLIENT_ID') as string;
-    this.redirectUri = this.config.get<string>(
-      'KEYCLOAK_REDIRECT_URI',
-    ) as string;
+    this.redirectUri = this.config.get<string>('KEYCLOAK_REDIRECT_URI') as string;
     this.scope = this.config.get<string>('KEYCLOAK_SCOPE') as string;
     this.authUri = this.config.get<string>('KEYCLOAK_AUTH_URI') as string;
-    this.grantType = this.config.get<string>('KEYCLOAK_GRANT_TYPE') as string;
   }
 
   // Build authorization URL for Keycloak
@@ -58,15 +50,13 @@ export class AuthService {
     const verifier = await this.redis.get(state);
 
     if (!verifier) {
-      throw new UnauthorizedException(
-        'Invalid or expired state (possible CSRF)',
-      );
+      throw new UnauthorizedException('Invalid or expired state (possible CSRF)');
     }
 
     await this.redis.del(state);
 
     return this.keycloak.requestTokens({
-      grant_type: this.grantType,
+      grant_type: 'authorization_code',
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       code,

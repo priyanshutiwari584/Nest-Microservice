@@ -1,9 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, HttpException, HttpStatus } from '@nestjs/common';
 import { BaseRpcExceptionFilter, RpcException } from '@nestjs/microservices';
 
 @Catch()
@@ -19,15 +14,9 @@ export class GlobalRpcExceptionFilter extends BaseRpcExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const res = exception.getResponse();
-      const message =
-        typeof res === 'string'
-          ? res
-          : ((res as { message?: string }).message ?? exception.message);
+      const message = typeof res === 'string' ? res : ((res as { message?: string }).message ?? exception.message);
 
-      return super.catch(
-        new RpcException({ statusCode: status, message }),
-        host,
-      );
+      return super.catch(new RpcException({ statusCode: status, message }), host);
     }
 
     // Native Error (unhandled throw inside a handler)

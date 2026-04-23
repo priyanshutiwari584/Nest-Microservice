@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBookDto } from './dto/book.dto';
-import {
-  ConflictRpcException,
-  NotFoundRpcException,
-} from 'libs/common/exceptions';
+import { ConflictRpcException, NotFoundRpcException } from 'libs/common/exceptions';
 import { CreatedResponse, OkResponse } from 'libs/common/response';
 
 @Injectable()

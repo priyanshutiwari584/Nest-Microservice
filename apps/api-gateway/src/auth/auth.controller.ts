@@ -1,16 +1,4 @@
-// src/auth/auth.controller.ts
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  Req,
-  Res,
-  HttpCode,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import express from 'express';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
@@ -49,31 +37,20 @@ export class AuthController {
   }
 
   @Get('callback')
-  async callback(
-    @Query('code') code: string,
-    @Query('state') state: string,
-    @Query('error') error: string,
-    @Res() res: express.Response,
-  ) {
+  async callback(@Query('code') code: string, @Query('state') state: string, @Query('error') error: string, @Res() res: express.Response) {
     if (error) {
       this.logger.warn(`Keycloak callback error: ${error}`);
       return res.status(HttpStatus.UNAUTHORIZED).json({ error });
     }
 
     if (!code || !state) {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ error: 'Missing code or state' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Missing code or state' });
     }
 
     const tokens = await this.authService.exchangeCode(code, state);
 
     // Refresh token → HttpOnly cookie scoped to /auth routes
-    res.cookie(
-      REFRESH_COOKIE_NAME,
-      tokens.refresh_token,
-      REFRESH_COOKIE_OPTIONS,
-    );
+    res.cookie(REFRESH_COOKIE_NAME, tokens.refresh_token, REFRESH_COOKIE_OPTIONS);
 
     return res.json({
       access_token: tokens.access_token,
@@ -88,19 +65,13 @@ export class AuthController {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
 
     if (!refreshToken) {
-      return res
-        .status(HttpStatus.UNAUTHORIZED)
-        .json({ error: 'No refresh token cookie found' });
+      return res.status(HttpStatus.UNAUTHORIZED).json({ error: 'No refresh token cookie found' });
     }
 
     const tokens = await this.authService.refreshTokens(refreshToken);
 
     // Rotate the refresh token cookie
-    res.cookie(
-      REFRESH_COOKIE_NAME,
-      tokens.refresh_token,
-      REFRESH_COOKIE_OPTIONS,
-    );
+    res.cookie(REFRESH_COOKIE_NAME, tokens.refresh_token, REFRESH_COOKIE_OPTIONS);
 
     return res.json({
       access_token: tokens.access_token,

@@ -1,9 +1,5 @@
 import { Module } from '@nestjs/common';
-import {
-  ClientsModule,
-  Transport,
-  ClientProviderOptions,
-} from '@nestjs/microservices';
+import { ClientsModule, Transport, ClientProviderOptions } from '@nestjs/microservices';
 
 export const SERVICES: ClientProviderOptions[] = [
   {

@@ -15,7 +15,7 @@ export class RedisService implements OnModuleDestroy {
 
   async get<T = string>(key: string): Promise<T | null> {
     const value = await this.client.get(key);
-    return value ? (JSON.parse(value as string) as T) : null;
+    return value ? (JSON.parse(value) as T) : null;
   }
 
   async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
@@ -39,11 +39,7 @@ export class RedisService implements OnModuleDestroy {
     return exists;
   }
 
-  async setIfNotExists(
-    key: string,
-    value: unknown,
-    ttlSeconds?: number,
-  ): Promise<boolean> {
+  async setIfNotExists(key: string, value: unknown, ttlSeconds?: number): Promise<boolean> {
     const data = JSON.stringify(value);
     const options: { EX?: number; NX: boolean } = { NX: true };
     if (ttlSeconds) options.EX = ttlSeconds;
