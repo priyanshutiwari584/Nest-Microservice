@@ -3,6 +3,7 @@ import { ApiGatewayModule } from './api-gateway.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { GlobalExceptionFilter } from 'libs/common/filters';
+import 'dotenv/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);

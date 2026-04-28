@@ -1,12 +1,14 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { BooksService } from './books.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateBookDto } from './dto/book.dto';
+import { AuthGuard } from 'libs/common/guard';
 
 @Controller()
 export class BooksController {
   constructor(private readonly booksService: BooksService) {}
 
+  @UseGuards(AuthGuard)
   @MessagePattern({ cmd: 'books.GET.hello' })
   getHello() {
     return this.booksService.getHello();

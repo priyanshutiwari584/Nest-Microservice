@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { GlobalRpcExceptionFilter } from 'libs/common/filters';
 import { BadRequestRpcException } from 'libs/common/exceptions';
+import 'dotenv/config';
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(BooksModule, {

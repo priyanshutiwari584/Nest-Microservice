@@ -1,6 +1,7 @@
 export interface RpcContext {
   method: string;
   path: string;
+  headers: Record<string, string>;
   body: Record<string, unknown>;
   query: Record<string, unknown>;
   params: string[];

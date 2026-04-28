@@ -29,6 +29,7 @@ export class GatewayProxyMiddleware implements NestMiddleware {
     const context: RpcContext = {
       method: req.method.toUpperCase(),
       path: urlParts.slice(1).join('/'),
+      headers: req.headers as Record<string, string>,
       body: req.body as Record<string, unknown>,
       query: req.query as Record<string, unknown>,
       params: urlParts.slice(2),

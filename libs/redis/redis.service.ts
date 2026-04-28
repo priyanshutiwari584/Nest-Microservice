@@ -1,15 +1,15 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
-import * as redis from 'redis';
 import { REDIS_CLIENT } from './redis.constant';
+import type { RedisClient } from './redis.constant';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
   constructor(
     @Inject(REDIS_CLIENT)
-    private readonly client: redis.RedisClientType,
+    private readonly client: RedisClient,
   ) {}
 
-  getClient(): redis.RedisClientType {
+  getClient(): RedisClient {
     return this.client;
   }
 
@@ -41,7 +41,7 @@ export class RedisService implements OnModuleDestroy {
 
   async setIfNotExists(key: string, value: unknown, ttlSeconds?: number): Promise<boolean> {
     const data = JSON.stringify(value);
-    const options: { EX?: number; NX: boolean } = { NX: true };
+    const options: { EX?: number; NX: true } = { NX: true };
     if (ttlSeconds) options.EX = ttlSeconds;
 
     const result = await this.client.set(key, data, options);
@@ -49,7 +49,9 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    console.log('[REDIS][DISCONNECT] Redis disconnecting');
-    await this.client.quit();
+    if (this.client.isOpen) {
+      console.log('[REDIS][DISCONNECT] Redis disconnecting');
+      this.client.destroy();
+    }
   }
 }

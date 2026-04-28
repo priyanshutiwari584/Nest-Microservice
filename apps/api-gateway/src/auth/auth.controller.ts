@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger } from '@nestjs/common';
 import express from 'express';
-import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 
 /**
@@ -24,10 +23,7 @@ const REFRESH_COOKIE_NAME = 'refresh_token';
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(
-    private readonly authService: AuthService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Get('login')
   @HttpCode(HttpStatus.OK)
@@ -37,7 +33,12 @@ export class AuthController {
   }
 
   @Get('callback')
-  async callback(@Query('code') code: string, @Query('state') state: string, @Query('error') error: string, @Res() res: express.Response) {
+  async callback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('error') error: string,
+    @Res() res: express.Response,
+  ) {
     if (error) {
       this.logger.warn(`Keycloak callback error: ${error}`);
       return res.status(HttpStatus.UNAUTHORIZED).json({ error });

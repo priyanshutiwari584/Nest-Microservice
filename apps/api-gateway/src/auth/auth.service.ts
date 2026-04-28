@@ -10,6 +10,7 @@ export class AuthService {
   private readonly redirectUri: string;
   private readonly scope: string;
   private readonly authUri: string;
+  private readonly clientSecret: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -21,6 +22,7 @@ export class AuthService {
     this.redirectUri = this.config.get<string>('KEYCLOAK_REDIRECT_URI') as string;
     this.scope = this.config.get<string>('KEYCLOAK_SCOPE') as string;
     this.authUri = this.config.get<string>('KEYCLOAK_AUTH_URI') as string;
+    this.clientSecret = this.config.get<string>('KEYCLOAK_CLIENT_SECRET') as string;
   }
 
   // Build authorization URL for Keycloak
@@ -58,6 +60,7 @@ export class AuthService {
     return this.keycloak.requestTokens({
       grant_type: 'authorization_code',
       client_id: this.clientId,
+      client_secret: this.clientSecret,
       redirect_uri: this.redirectUri,
       code,
       code_verifier: verifier,

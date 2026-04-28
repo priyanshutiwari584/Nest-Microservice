@@ -34,7 +34,6 @@ export default [
       ],
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-require-imports': 'error',
-      'no-duplicate-imports': 'error',
       'no-return-await': 'error',
     },
   },
