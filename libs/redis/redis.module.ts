@@ -2,6 +2,7 @@ import { createClient } from 'redis';
 import { REDIS_CLIENT, RedisClient, RedisModuleOptions } from './redis.constant';
 import { RedisService } from './redis.service';
 import { DynamicModule, Global, Module, FactoryProvider } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
 type RedisModuleAsyncOptions = {
   inject?: any[];
@@ -48,6 +49,7 @@ export class RedisModule {
 
     return {
       module: RedisModule,
+      imports: [ConfigModule],
       providers: [redisProvider, RedisService],
       exports: [RedisService, REDIS_CLIENT],
     };

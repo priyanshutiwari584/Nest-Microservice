@@ -5,6 +5,7 @@ import { ServicesModule } from './gateway-services/gateway-services.module';
 import { GatewayProxyMiddleware } from './middlewares/gateway-proxy.middleware';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { DrizzleModule } from 'libs/drizzle';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     ServicesModule,
     AuthModule,
+    DrizzleModule,
   ],
   controllers: [ApiGatewayController],
   providers: [ApiGatewayService],

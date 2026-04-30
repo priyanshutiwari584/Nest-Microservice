@@ -1,9 +1,16 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtVerifierService } from '../jwt/jwt-service';
-
+import { RedisService } from 'libs/redis';
+import { DRIZZLE, users } from 'libs/drizzle';
+import type { DrizzleDB } from 'libs/drizzle';
+import { eq } from 'drizzle-orm';
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly jwtVerifier: JwtVerifierService) {}
+  constructor(
+    private readonly jwtVerifier: JwtVerifierService,
+    private readonly redis: RedisService,
+    @Inject(DRIZZLE) private readonly db: DrizzleDB,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const rpcContext = context.switchToRpc();
@@ -20,7 +27,21 @@ export class AuthGuard implements CanActivate {
       const decoded = await this.jwtVerifier.verifyToken(token);
 
       // attach user
-      data.user = decoded;
+      let user: any = null;
+
+      user = await this.redis.get(`user:${decoded.sub}`);
+
+      if (!user) {
+        user = await this.db
+          .select()
+          .from(users)
+          .where(eq(users.kcId, decoded.sub))
+          .then((res) => res[0] || null);
+
+        if (user) this.redis.set(`user:${decoded.sub}`, user, 60 * 60 * 24);
+      }
+
+      data.user = user;
 
       return true;
     } catch (err) {

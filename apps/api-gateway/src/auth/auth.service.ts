@@ -1,8 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'libs/redis';
 import { PkceService } from './pkce';
 import { KeycloakClient } from './keycloak';
+import { DRIZZLE, users } from 'libs/drizzle';
+import type { DrizzleDB } from 'libs/drizzle';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +19,7 @@ export class AuthService {
     private readonly pkce: PkceService,
     private readonly keycloak: KeycloakClient,
     private readonly redis: RedisService,
+    @Inject(DRIZZLE) private readonly db: DrizzleDB,
   ) {
     this.clientId = this.config.get<string>('KEYCLOAK_CLIENT_ID') as string;
     this.redirectUri = this.config.get<string>('KEYCLOAK_REDIRECT_URI') as string;
@@ -49,22 +52,54 @@ export class AuthService {
 
   // Exchange code for tokens
   async exchangeCode(code: string, state: string) {
-    const verifier = await this.redis.get(state);
+    try {
+      const verifier = await this.redis.get(state);
 
-    if (!verifier) {
-      throw new UnauthorizedException('Invalid or expired state (possible CSRF)');
+      if (!verifier) {
+        throw new UnauthorizedException('Invalid or expired state (possible CSRF)');
+      }
+
+      await this.redis.del(state);
+
+      const data = await this.keycloak.requestTokens({
+        grant_type: 'authorization_code',
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        redirect_uri: this.redirectUri,
+        code,
+        code_verifier: verifier,
+      });
+
+      const userInfo = await this.keycloak.getUserInfo(data.access_token);
+
+      const user = await this.db
+        .insert(users)
+        .values({
+          name: userInfo.name,
+          email: userInfo.email,
+          username: userInfo.preferred_username,
+          kcId: userInfo.sub,
+          refreshToken: data.refresh_token,
+        })
+        .onConflictDoUpdate({
+          target: users.kcId,
+          set: {
+            name: userInfo.name,
+            email: userInfo.email,
+            username: userInfo.preferred_username,
+            refreshToken: data.refresh_token,
+          },
+        })
+        .returning()
+        .then((res) => res[0]);
+
+      this.redis.set(`user:${userInfo.sub}`, user, 60 * 60 * 24);
+
+      return data;
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
-
-    await this.redis.del(state);
-
-    return this.keycloak.requestTokens({
-      grant_type: 'authorization_code',
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      redirect_uri: this.redirectUri,
-      code,
-      code_verifier: verifier,
-    });
   }
 
   // Refresh tokens
