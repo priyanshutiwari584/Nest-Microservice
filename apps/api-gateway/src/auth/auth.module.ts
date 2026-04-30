@@ -6,10 +6,12 @@ import { PkceService } from './pkce';
 import { KeycloakClient } from './keycloak';
 import { ConfigService } from '@nestjs/config';
 import { RedisModule } from 'libs/redis';
+import { GuardModule } from 'libs/common/guard/gaurd.module';
 
 @Module({
   imports: [
     HttpModule,
+    GuardModule,
     RedisModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

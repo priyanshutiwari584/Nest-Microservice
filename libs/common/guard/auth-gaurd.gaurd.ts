@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedExceptio
 import { JwtVerifierService } from '../jwt/jwt-service';
 import { RedisService } from 'libs/redis';
 import { DRIZZLE, users } from 'libs/drizzle';
-import type { DrizzleDB } from 'libs/drizzle';
+import type { DrizzleDB, User } from 'libs/drizzle';
 import { eq } from 'drizzle-orm';
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -27,7 +27,7 @@ export class AuthGuard implements CanActivate {
       const decoded = await this.jwtVerifier.verifyToken(token);
 
       // attach user
-      let user: any = null;
+      let user: User | null = null;
 
       user = await this.redis.get(`user:${decoded.sub}`);
 

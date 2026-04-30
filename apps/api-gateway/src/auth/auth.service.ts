@@ -5,6 +5,7 @@ import { PkceService } from './pkce';
 import { KeycloakClient } from './keycloak';
 import { DRIZZLE, users } from 'libs/drizzle';
 import type { DrizzleDB } from 'libs/drizzle';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class AuthService {
@@ -116,9 +117,13 @@ export class AuthService {
   }
 
   // Logout from Keycloak
-  async logout(refreshToken: string) {
+  async logout(refreshToken: string, userKcId: string) {
     if (!refreshToken) return;
 
+    await this.db.update(users).set({ refreshToken: '' }).where(eq(users.refreshToken, refreshToken));
+
     await this.keycloak.logout(this.clientId, refreshToken);
+
+    await this.redis.del(`user:${userKcId}`);
   }
 }

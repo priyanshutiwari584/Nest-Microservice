@@ -1,6 +1,9 @@
-import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger, UseGuards } from '@nestjs/common';
 import express from 'express';
 import { AuthService } from './auth.service';
+import { AuthGuard } from 'libs/common/guard';
+import { CurrentUser } from 'libs/common/decorators';
+import type { User } from 'libs/drizzle';
 
 /**
  * Cookie configuration for the refresh token.
@@ -81,12 +84,14 @@ export class AuthController {
     });
   }
 
+  @UseGuards(AuthGuard)
   @Get('logout')
   @HttpCode(HttpStatus.OK)
-  async webLogout(@Req() req: express.Request, @Res() res: express.Response) {
+  async webLogout(@CurrentUser() user: User, @Req() req: express.Request, @Res() res: express.Response) {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    console.log('Logging out user:', user?.kcId);
 
-    await this.authService.logout(refreshToken);
+    await this.authService.logout(refreshToken, user.kcId);
 
     // Clear the HttpOnly cookie
     res.clearCookie(REFRESH_COOKIE_NAME, { path: '/auth' });

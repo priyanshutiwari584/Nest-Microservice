@@ -1,3 +1,5 @@
+import { User } from 'libs/drizzle';
+
 export interface RpcContext {
   method: string;
   path: string;
@@ -6,4 +8,5 @@ export interface RpcContext {
   query: Record<string, unknown>;
   params: string[];
   requestId: string;
+  user?: User | null;
 }

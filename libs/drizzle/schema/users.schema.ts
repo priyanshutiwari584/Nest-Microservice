@@ -13,3 +13,5 @@ export const users = pgTable(
   },
   (t) => [uniqueIndex('email_idx').on(t.email), uniqueIndex('kcId_idx').on(t.kcId)],
 );
+
+export type User = typeof users.$inferSelect;

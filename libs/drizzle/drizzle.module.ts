@@ -21,7 +21,7 @@ export const DRIZZLE = Symbol('drizzle-connection');
 
         const pool = new Pool({
           connectionString: `postgresql://${user}:${password}@localhost:${port}/${db}`,
-          ssl: false, // set to true if your PostgreSQL server requires SSL connections and belongs to a trusted network
+          ssl: false, // set to true if your PostgreSQL server requires SSL connections
         });
 
         return drizzle(pool, { schema }) as NodePgDatabase<typeof schema>;
