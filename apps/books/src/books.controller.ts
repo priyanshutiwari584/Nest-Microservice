@@ -3,8 +3,6 @@ import { BooksService } from './books.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateBookDto } from './dto/book.dto';
 import { AuthGuard } from 'libs/common/guard';
-import { CurrentUser } from 'libs/common/decorators';
-import type { User } from 'libs/drizzle';
 
 @Controller()
 export class BooksController {
@@ -12,8 +10,7 @@ export class BooksController {
 
   @UseGuards(AuthGuard)
   @MessagePattern({ cmd: 'books.GET.hello' })
-  getHello(@CurrentUser() user: User) {
-    console.log(user);
+  getHello() {
     return this.booksService.getHello();
   }
 

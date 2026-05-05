@@ -4,10 +4,13 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { GlobalExceptionFilter } from 'libs/common/filters';
 import 'dotenv/config';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
   const PORT = process.env.API_GATEWAY_PORT ?? 5000;
+
+  app.use(cookieParser());
 
   const pipe = new ValidationPipe({
     whitelist: true,

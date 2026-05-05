@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger, UseGuards } from '@nestjs/common';
-import express from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from 'libs/common/guard';
 import { CurrentUser } from 'libs/common/decorators';
@@ -30,7 +30,7 @@ export class AuthController {
 
   @Get('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Res() res: express.Response) {
+  async login(@Res() res: Response) {
     const url = await this.authService.buildAuthorizationUrl();
     return res.redirect(url);
   }
@@ -40,7 +40,7 @@ export class AuthController {
     @Query('code') code: string,
     @Query('state') state: string,
     @Query('error') error: string,
-    @Res() res: express.Response,
+    @Res() res: Response,
   ) {
     if (error) {
       this.logger.warn(`Keycloak callback error: ${error}`);
@@ -65,7 +65,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async webRefresh(@Req() req: express.Request, @Res() res: express.Response) {
+  async webRefresh(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
 
     if (!refreshToken) {
@@ -87,9 +87,8 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Get('logout')
   @HttpCode(HttpStatus.OK)
-  async webLogout(@CurrentUser() user: User, @Req() req: express.Request, @Res() res: express.Response) {
+  async webLogout(@CurrentUser() user: User, @Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    console.log('Logging out user:', user?.kcId);
 
     await this.authService.logout(refreshToken, user.kcId);
 
@@ -100,7 +99,7 @@ export class AuthController {
   }
 
   @Get('csrf-token')
-  getCsrfToken(@Req() req: express.Request & { csrfToken?: () => string }) {
+  getCsrfToken(@Req() req: Request & { csrfToken?: () => string }) {
     return { csrfToken: req.csrfToken?.() ?? '' };
   }
 }

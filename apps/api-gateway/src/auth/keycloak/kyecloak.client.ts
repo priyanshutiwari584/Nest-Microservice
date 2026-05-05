@@ -54,13 +54,14 @@ export class KeycloakClient {
     }
   }
 
-  async logout(clientId: string, refreshToken: string) {
+  async logout(clientId: string, clientSecret: string, refreshToken: string) {
     try {
       await firstValueFrom(
         this.http.post(
           this.logoutUri,
           new URLSearchParams({
             client_id: clientId,
+            client_secret: clientSecret,
             refresh_token: refreshToken,
           }).toString(),
           {

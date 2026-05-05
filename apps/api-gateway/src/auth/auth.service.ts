@@ -45,7 +45,7 @@ export class AuthService {
       state,
       code_challenge: challenge,
       code_challenge_method: 'S256',
-      prompt: 'login',
+      // prompt: 'login',
     });
 
     return `${this.authUri}?${params.toString()}`;
@@ -118,11 +118,11 @@ export class AuthService {
 
   // Logout from Keycloak
   async logout(refreshToken: string, userKcId: string) {
-    if (!refreshToken) return;
+    if (!refreshToken) throw new BadRequestException('Refresh token required for logout');
 
     await this.db.update(users).set({ refreshToken: '' }).where(eq(users.refreshToken, refreshToken));
 
-    await this.keycloak.logout(this.clientId, refreshToken);
+    await this.keycloak.logout(this.clientId, this.clientSecret, refreshToken);
 
     await this.redis.del(`user:${userKcId}`);
   }
