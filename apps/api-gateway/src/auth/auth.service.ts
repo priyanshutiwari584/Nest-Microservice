@@ -29,6 +29,33 @@ export class AuthService {
     this.clientSecret = this.config.get<string>('KEYCLOAK_CLIENT_SECRET') as string;
   }
 
+  private async saveUser(data: { access_token: string; refresh_token: string }) {
+    const userInfo = await this.keycloak.getUserInfo(data.access_token);
+
+    const user = await this.db
+      .insert(users)
+      .values({
+        name: userInfo.name,
+        email: userInfo.email,
+        username: userInfo.preferred_username,
+        kcId: userInfo.sub,
+        refreshToken: data.refresh_token,
+      })
+      .onConflictDoUpdate({
+        target: users.kcId,
+        set: {
+          name: userInfo.name,
+          email: userInfo.email,
+          username: userInfo.preferred_username,
+          refreshToken: data.refresh_token,
+        },
+      })
+      .returning()
+      .then((res) => res[0]);
+
+    this.redis.set(`user:${userInfo.sub}`, user, 60 * 60 * 24);
+  }
+
   // Build authorization URL for Keycloak
   async buildAuthorizationUrl(): Promise<string> {
     const verifier = this.pkce.generateCodeVerifier();
@@ -57,7 +84,7 @@ export class AuthService {
       const verifier = await this.redis.get(state);
 
       if (!verifier) {
-        throw new UnauthorizedException('Invalid or expired state (possible CSRF)');
+        throw new UnauthorizedException('Invalid or expired state');
       }
 
       await this.redis.del(state);
@@ -71,30 +98,10 @@ export class AuthService {
         code_verifier: verifier,
       });
 
-      const userInfo = await this.keycloak.getUserInfo(data.access_token);
-
-      const user = await this.db
-        .insert(users)
-        .values({
-          name: userInfo.name,
-          email: userInfo.email,
-          username: userInfo.preferred_username,
-          kcId: userInfo.sub,
-          refreshToken: data.refresh_token,
-        })
-        .onConflictDoUpdate({
-          target: users.kcId,
-          set: {
-            name: userInfo.name,
-            email: userInfo.email,
-            username: userInfo.preferred_username,
-            refreshToken: data.refresh_token,
-          },
-        })
-        .returning()
-        .then((res) => res[0]);
-
-      this.redis.set(`user:${userInfo.sub}`, user, 60 * 60 * 24);
+      await this.saveUser({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
 
       return data;
     } catch (error) {
@@ -103,17 +110,23 @@ export class AuthService {
     }
   }
 
-  // Refresh tokens
-  async refreshTokens(refreshToken: string) {
-    if (!refreshToken) {
-      throw new BadRequestException('Refresh token required');
-    }
-
-    return this.keycloak.requestTokens({
-      grant_type: 'refresh_token',
+  // Login with username/password (Resource Owner Password Credentials Grant)
+  async login(username: string, password: string) {
+    const data = await this.keycloak.requestTokens({
+      grant_type: 'password',
       client_id: this.clientId,
-      refresh_token: refreshToken,
+      client_secret: this.clientSecret,
+      scope: 'openid profile email',
+      username,
+      password,
     });
+
+    await this.saveUser({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+
+    return data;
   }
 
   // Logout from Keycloak

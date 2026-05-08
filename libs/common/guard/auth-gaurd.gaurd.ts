@@ -1,51 +1,54 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtVerifierService } from '../jwt/jwt-service';
-import { RedisService } from 'libs/redis';
-import { DRIZZLE, users } from 'libs/drizzle';
-import type { DrizzleDB, User } from 'libs/drizzle';
-import { eq } from 'drizzle-orm';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { AccessTokenStrategy, RefreshTokenStrategy } from '../strategy';
+import { Response } from 'express';
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private readonly jwtVerifier: JwtVerifierService,
-    private readonly redis: RedisService,
-    @Inject(DRIZZLE) private readonly db: DrizzleDB,
+    private readonly accessTokenStrategy: AccessTokenStrategy,
+    private readonly refreshTokenStrategy: RefreshTokenStrategy,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const rpcContext = context.switchToRpc();
-    const data = rpcContext.getData();
+    let request: any;
+    let response: Response | null = null;
 
-    // Expect token from API Gateway
-    const token = data?.headers?.authorization?.replace('Bearer ', '') || data?.token;
+    if (context.getType() === 'http') {
+      request = context.switchToHttp().getRequest();
+      response = context.switchToHttp().getResponse();
+    } else if (context.getType<'rpc'>() === 'rpc') {
+      request = context.switchToRpc().getData();
+    }
+
+    const token: string = request?.headers?.authorization?.replace('Bearer ', '') || request?.token;
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
     }
 
     try {
-      const decoded = await this.jwtVerifier.verifyToken(token);
+      const user = await this.accessTokenStrategy.validate(token);
 
-      // attach user
-      let user: User | null = null;
-
-      user = await this.redis.get(`user:${decoded.sub}`);
-
-      if (!user) {
-        user = await this.db
-          .select()
-          .from(users)
-          .where(eq(users.kcId, decoded.sub))
-          .then((res) => res[0] || null);
-
-        if (user) this.redis.set(`user:${decoded.sub}`, user, 60 * 60 * 24);
-      }
-
-      data.user = user;
-
+      request.user = user;
       return true;
-    } catch (err) {
-      throw new UnauthorizedException(err.message);
+    } catch {
+      try {
+        const { user, accessToken } = await this.refreshTokenStrategy.validate(request);
+
+        request.user = user;
+
+        console.log(accessToken);
+
+        // Send new tokens back to frontend via response headers
+        if (response) {
+          response.setHeader('X-New-Access-Token', accessToken);
+          response.setHeader('Access-Control-Expose-Headers', 'X-New-Access-Token');
+        }
+
+        return true;
+      } catch (err) {
+        throw new UnauthorizedException(err?.message || 'Invalid or expired token');
+      }
     }
   }
 }

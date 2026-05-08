@@ -6,6 +6,7 @@ import { AuthGuard } from 'libs/common/guard/auth-gaurd.gaurd';
 import { KeycloakClient } from 'apps/api-gateway/src/auth/keycloak';
 import { RedisModule } from 'libs/redis';
 import { DrizzleModule } from 'libs/drizzle';
+import { AccessTokenStrategy, RefreshTokenStrategy } from '../strategy';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { DrizzleModule } from 'libs/drizzle';
     }),
     DrizzleModule,
   ],
-  providers: [KeycloakClient, JwtVerifierService, AuthGuard],
-  exports: [AuthGuard, JwtVerifierService],
+  providers: [KeycloakClient, JwtVerifierService, AuthGuard, AccessTokenStrategy, RefreshTokenStrategy],
+  exports: [AuthGuard, JwtVerifierService, AccessTokenStrategy, RefreshTokenStrategy],
 })
 export class GuardModule {}

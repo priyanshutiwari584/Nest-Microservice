@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Req, Res, HttpCode, HttpStatus, Logger, UseGuards, Body } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from 'libs/common/guard';
@@ -16,8 +16,8 @@ const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: true,
   sameSite: 'lax' as const,
-  path: '/auth',
-  maxAge: 30 * 24 * 60 * 60 * 1000,
+  path: '/',
+  maxAge: 60 * 30 * 1000, // 30 minutes (should match Keycloak refresh token lifespan)
 };
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
@@ -63,18 +63,13 @@ export class AuthController {
     });
   }
 
-  @Post('refresh')
+  @Post('login')
   @HttpCode(HttpStatus.OK)
-  async webRefresh(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
+  async webLogin(@Body() body: { username: string; password: string }, @Res() res: Response) {
+    const { username, password } = body;
+    const tokens = await this.authService.login(username, password);
 
-    if (!refreshToken) {
-      return res.status(HttpStatus.UNAUTHORIZED).json({ error: 'No refresh token cookie found' });
-    }
-
-    const tokens = await this.authService.refreshTokens(refreshToken);
-
-    // Rotate the refresh token cookie
+    // Refresh token → HttpOnly cookie scoped to /auth routes
     res.cookie(REFRESH_COOKIE_NAME, tokens.refresh_token, REFRESH_COOKIE_OPTIONS);
 
     return res.json({
@@ -98,8 +93,9 @@ export class AuthController {
     return res.json({ message: 'Logged out successfully' });
   }
 
-  @Get('csrf-token')
-  getCsrfToken(@Req() req: Request & { csrfToken?: () => string }) {
-    return { csrfToken: req.csrfToken?.() ?? '' };
+  @UseGuards(AuthGuard)
+  @Get('try')
+  try() {
+    return console.log('try block');
   }
 }
