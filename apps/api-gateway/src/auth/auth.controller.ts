@@ -88,7 +88,7 @@ export class AuthController {
     await this.authService.logout(refreshToken, user.kcId);
 
     // Clear the HttpOnly cookie
-    res.clearCookie(REFRESH_COOKIE_NAME, { path: '/auth' });
+    res.clearCookie(REFRESH_COOKIE_NAME, { path: '/' });
 
     return res.json({ message: 'Logged out successfully' });
   }
