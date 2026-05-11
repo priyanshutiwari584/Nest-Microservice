@@ -80,34 +80,29 @@ export class AuthService {
 
   // Exchange code for tokens
   async exchangeCode(code: string, state: string) {
-    try {
-      const verifier = await this.redis.get(state);
+    const verifier = await this.redis.get(state);
 
-      if (!verifier) {
-        throw new UnauthorizedException('Invalid or expired state');
-      }
-
-      await this.redis.del(state);
-
-      const data = await this.keycloak.requestTokens({
-        grant_type: 'authorization_code',
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        redirect_uri: this.redirectUri,
-        code,
-        code_verifier: verifier,
-      });
-
-      await this.saveUser({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      });
-
-      return data;
-    } catch (error) {
-      console.error(error);
-      throw error;
+    if (!verifier) {
+      throw new UnauthorizedException('Invalid or expired state');
     }
+
+    await this.redis.del(state);
+
+    const data = await this.keycloak.requestTokens({
+      grant_type: 'authorization_code',
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      redirect_uri: this.redirectUri,
+      code,
+      code_verifier: verifier,
+    });
+
+    await this.saveUser({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+    });
+
+    return data;
   }
 
   // Login with username/password (Resource Owner Password Credentials Grant)

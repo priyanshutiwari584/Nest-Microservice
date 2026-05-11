@@ -29,4 +29,12 @@ export class BooksService {
     }
     return OkResponse(book, 'Book fetched successfully');
   }
+
+  getbooksbyname(name: string) {
+    const book = this.books.filter((book) => book.name === name);
+    if (book.length === 0) {
+      throw new NotFoundRpcException('Book not found');
+    }
+    return OkResponse(book, 'Books fetched successfully');
+  }
 }

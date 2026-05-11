@@ -29,4 +29,10 @@ export class BooksController {
     const index = params?.[0];
     return this.booksService.getbookById(index);
   }
+
+  @MessagePattern({ cmd: 'books.GET.getbooksbyname' })
+  getbooksbyname(@Payload('params') params: string[]) {
+    const name = params?.[0];
+    return this.booksService.getbooksbyname(name);
+  }
 }

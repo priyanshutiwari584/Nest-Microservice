@@ -96,6 +96,6 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Get('try')
   try() {
-    return console.log('try block');
+    return 'try success';
   }
 }

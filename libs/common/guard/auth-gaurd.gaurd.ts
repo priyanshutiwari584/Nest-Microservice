@@ -37,8 +37,6 @@ export class AuthGuard implements CanActivate {
 
         request.user = user;
 
-        console.log(accessToken);
-
         // Send new tokens back to frontend via response headers
         if (response) {
           response.setHeader('X-New-Access-Token', accessToken);

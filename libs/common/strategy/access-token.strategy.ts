@@ -17,10 +17,8 @@ export class AccessTokenStrategy {
     try {
       const decoded = await this.jwtVerifier.verifyToken(token);
 
-      // Try cache first
-      let user = await this.redis.get<User>(`user:${decoded.sub}`);
+      let user: User | null = await this.redis.get<User>(`user:${decoded.sub}`);
 
-      // Fetch from DB if not cached
       if (!user) {
         user = await this.db
           .select()

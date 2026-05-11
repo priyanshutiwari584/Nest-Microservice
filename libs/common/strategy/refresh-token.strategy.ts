@@ -1,11 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import type { User } from 'libs/drizzle';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { DRIZZLE, users } from 'libs/drizzle';
+import type { DrizzleDB, User } from 'libs/drizzle';
 import { RedisService } from 'libs/redis';
 import { Request } from 'express';
 import { RpcContext } from '../interfaces';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class RefreshTokenStrategy {
@@ -18,6 +20,7 @@ export class RefreshTokenStrategy {
     private readonly http: HttpService,
     private readonly redis: RedisService,
     private readonly config: ConfigService,
+    @Inject(DRIZZLE) private readonly db: DrizzleDB,
   ) {
     this.tokenUri = this.config.get<string>('KEYCLOAK_TOKEN_URI') as string;
     this.introspectUri = this.config.get<string>('KEYCLOAK_INTROSPECT_URI') as string;
@@ -47,7 +50,7 @@ export class RefreshTokenStrategy {
       ),
     );
 
-    if (!data.active) throw new UnauthorizedException('Invalid or expired refresh token');
+    if (!data.active) throw new UnauthorizedException('Invalid or expired token');
 
     const { data: response } = await firstValueFrom(
       this.http.post(
@@ -66,7 +69,19 @@ export class RefreshTokenStrategy {
       ),
     );
 
-    const user = await this.redis.get<User>(`user:${data.sub}`);
+    let user: User | null = await this.redis.get<User>(`user:${data.sub}`);
+
+    if (!user) {
+      user = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.kcId, data.sub))
+        .then((res) => res[0] || null);
+
+      if (user) {
+        await this.redis.set(`user:${data.sub}`, user, 60 * 60 * 24);
+      }
+    }
 
     if (!user) {
       throw new UnauthorizedException('User not found');
