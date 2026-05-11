@@ -3,7 +3,6 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtVerifierService } from 'libs/common/jwt/jwt-service';
 import { AuthGuard } from 'libs/common/guard/auth-gaurd.gaurd';
-import { KeycloakClient } from 'apps/api-gateway/src/auth/keycloak';
 import { RedisModule } from 'libs/redis';
 import { DrizzleModule } from 'libs/drizzle';
 import { AccessTokenStrategy, RefreshTokenStrategy } from '../strategy';
@@ -23,7 +22,7 @@ import { AccessTokenStrategy, RefreshTokenStrategy } from '../strategy';
     }),
     DrizzleModule,
   ],
-  providers: [KeycloakClient, JwtVerifierService, AuthGuard, AccessTokenStrategy, RefreshTokenStrategy],
-  exports: [AuthGuard, JwtVerifierService, AccessTokenStrategy, RefreshTokenStrategy],
+  providers: [JwtVerifierService, AuthGuard, AccessTokenStrategy, RefreshTokenStrategy],
+  exports: [JwtVerifierService, AuthGuard, AccessTokenStrategy, RefreshTokenStrategy],
 })
 export class GuardModule {}
