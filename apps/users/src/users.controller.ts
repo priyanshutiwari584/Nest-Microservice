@@ -1,18 +1,22 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { AuthGuard } from 'libs/common/guard';
 
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @MessagePattern('getHello')
-  getHello(): string {
-    return this.usersService.getHello();
+  @UseGuards(AuthGuard)
+  @MessagePattern({ cmd: 'users.GET.all' })
+  async findAll() {
+    return this.usersService.findAll();
   }
 
-  @MessagePattern('findAll')
-  findAll(): string {
-    return this.usersService.findAll();
+  @UseGuards(AuthGuard)
+  @MessagePattern({ cmd: 'users.GET.findByUsername' })
+  async findByUsername(@Payload('params') params: string[]) {
+    const [username] = params;
+    return this.usersService.findByUsername(username);
   }
 }

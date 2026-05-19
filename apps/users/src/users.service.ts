@@ -1,12 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import { NotFoundRpcException } from 'libs/common/exceptions';
+import { OkResponse } from 'libs/common/response';
+import { DRIZZLE, users } from 'libs/drizzle';
+import type { DrizzleDB } from 'libs/drizzle';
 
 @Injectable()
 export class UsersService {
-  getHello(): string {
-    return 'Hello World! from Users App';
+  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDB) {}
+
+  async findAll() {
+    const userList = await this.db
+      .select({
+        name: users.name,
+        username: users.username,
+        email: users.email,
+        kcId: users.kcId,
+      })
+      .from(users);
+
+    return OkResponse(userList);
   }
 
-  findAll(): string {
-    return 'All users from Users App';
+  async findByUsername(username: string) {
+    const user = await this.db
+      .select({
+        name: users.name,
+        username: users.username,
+        email: users.email,
+        kcId: users.kcId,
+      })
+      .from(users)
+      .where(eq(users.username, username))
+      .then((res) => res[0] || null);
+
+    if (!user) {
+      throw new NotFoundRpcException('User not found');
+    }
+
+    return OkResponse(user);
   }
 }
